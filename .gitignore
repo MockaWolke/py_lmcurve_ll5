@@ -1,0 +1,34 @@
+
+---
+
+### **.gitignore** (Python and C)
+
+```gitignore
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+*.env
+*.venv
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# C / Compiled objects
+*.o
+*.so
+*.a
+*.out
+*.dSYM/
+*.exe
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
