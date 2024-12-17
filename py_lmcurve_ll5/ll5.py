@@ -1,8 +1,11 @@
 import math
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Callable
+from functools import partial
 from .lmcurve_ll5 import lmcurve_ll5 as c_lmcurve_ll5
 
+def ll5(conc : float, b : float, c : float, d : float, e : float, f: float) -> float:
+    return c + (d - c) / (1 + (conc / e) ** b) ** f
 
 @dataclass
 class LL5Params:
@@ -11,6 +14,10 @@ class LL5Params:
     d: Optional[float]
     e: Optional[float]
     f: Optional[float]
+
+def fix_ll5(params: LL5Params) -> Callable:
+    return partial(ll5, b=params.b, c=params.c, d=params.d, e=params.e, f=params.f)
+    
 
 
 def lmcurve_ll5(x, y, b=None, c=None, d=None, e=None, f=None) -> LL5Params:
