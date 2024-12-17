@@ -32,6 +32,7 @@ static PyObject *lmcurve_ll5(PyObject *self, PyObject *args) {
     PyObject *x_obj, *y_obj;
     double b, c, d, e, f;
 
+    // Parse input arguments
     if (!PyArg_ParseTuple(args, "O!O!ddddd",
                           &PyList_Type, &x_obj, &PyList_Type, &y_obj,
                           &b, &c, &d, &e, &f)) {
@@ -46,26 +47,47 @@ static PyObject *lmcurve_ll5(PyObject *self, PyObject *args) {
         y[i] = PyFloat_AsDouble(PyList_GetItem(y_obj, i));
     }
 
-    // Set up context
+    // !!! DATA-FIX, force plateau at x=0
+    // Replace x=0 with a very small value
+    for (int i = 0; i < n; i++) {
+        if (x[i] == 0.0) {
+            x[i] = 1.e-100;
+        }
+    }
+
+    // Set up the context for fixed parameters
     Context ctx = {b, c, d, e, f};
-    int pn = 0;
+    int pn = 0; // Number of free parameters
     if (isnan(b)) pn++;
     if (isnan(c)) pn++;
     if (isnan(d)) pn++;
     if (isnan(e)) pn++;
     if (isnan(f)) pn++;
 
-    double par[5] = {1, 1, 1, 1, 1};
+    // Initial guesses for free parameters
+    double par[5] = {1.0, 1.0, 1.0, 1.0, 1.0};
+
+    // Set up control and status structures
     lm_control_struct control = lm_control_double;
     control.stepbound = 1.e-12;
     control.patience = 1.e+4;
     lm_status_struct status;
 
+    // Run the curve-fitting routine
     lmcurve_user(pn, par, n, x, y, N, &ctx, &control, &status);
 
-    // Return parameters as a tuple
-    return Py_BuildValue("ddddd", par[0], par[1], par[2], par[3], par[4]);
+    // Reconstruct the parameter array with fixed values
+    int pi = 0;
+    double final_b = isnan(ctx.b) ? par[pi++] : ctx.b;
+    double final_c = isnan(ctx.c) ? par[pi++] : ctx.c;
+    double final_d = isnan(ctx.d) ? par[pi++] : ctx.d;
+    double final_e = isnan(ctx.e) ? par[pi++] : ctx.e;
+    double final_f = isnan(ctx.f) ? par[pi++] : ctx.f;
+
+    // Return the final parameters as a tuple
+    return Py_BuildValue("ddddd", final_b, final_c, final_d, final_e, final_f);
 }
+
 
 // Module method table
 static PyMethodDef RlmcurveMethods[] = {

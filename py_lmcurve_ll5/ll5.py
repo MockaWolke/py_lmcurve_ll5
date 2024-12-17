@@ -20,15 +20,13 @@ def lmcurve_ll5(x, y, b=None, c=None, d=None, e=None, f=None) -> LL5Params:
     Args:
         x (list or np.ndarray): Independent variable values.
         y (list or np.ndarray): Dependent variable values.
-        b, c, d, e, f (Optional[float]): Initial guesses for parameters.
-                                         Use None for unknown values.
+        b, c, d, e, f (Optional[float]): Fixing for parameters.
 
     Returns:
         LL5Params: A dataclass with the fitted parameters.
     """
     if not isinstance(x, list) or not all([isinstance(i, float) for i in x]):
         raise ValueError("x must be a list of floats")
-
 
     if not isinstance(y, list) or not all([isinstance(i, float) for i in y]):
         raise ValueError("y must be a list of floats")
@@ -44,10 +42,19 @@ def lmcurve_ll5(x, y, b=None, c=None, d=None, e=None, f=None) -> LL5Params:
     f_val = float("nan") if f is None else f
 
     # Call the C extension function
-    result = c_lmcurve_ll5(
-        x, y, b_val, c_val, d_val, e_val, f_val
-    )
+    result = c_lmcurve_ll5(x, y, b_val, c_val, d_val, e_val, f_val)
 
+    if b is not None and result[0] != b:
+        raise ValueError("Fitted parameter 'b' does not match the provided fixed value")
+    if c is not None and result[1] != c:
+        raise ValueError("Fitted parameter 'c' does not match the provided fixed value")
+    if d is not None and result[2] != d:
+        raise ValueError("Fitted parameter 'd' does not match the provided fixed value")
+    if e is not None and result[3] != e:
+        raise ValueError("Fitted parameter 'e' does not match the provided fixed value")
+    if f is not None and result[4] != f:
+        raise ValueError("Fitted parameter 'f' does not match the provided fixed value")
+    
     # Convert back to Python types and check for NaN to return None
     return LL5Params(
         None if math.isnan(result[0]) else result[0],
@@ -56,4 +63,3 @@ def lmcurve_ll5(x, y, b=None, c=None, d=None, e=None, f=None) -> LL5Params:
         None if math.isnan(result[3]) else result[3],
         None if math.isnan(result[4]) else result[4],
     )
-
